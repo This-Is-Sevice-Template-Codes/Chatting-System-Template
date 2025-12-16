@@ -1,10 +1,10 @@
 ##  README.md 추가 및 보완 사항
 
-[1. 기술명세서](https://github.com/This-Is-Sevice-Template-Codes/Chatting-System-Template/blob/main/%5B1%5D%20%EA%B8%B0%EC%88%A0%EB%AA%85%EC%84%B8%EC%84%9C.md) 
+[1. 기술명세서](https://github.com/This-Is-Sevice-Template-Codes/Chatting-System-Template/blob/main/docs/%5B1%5D%20%EA%B8%B0%EC%88%A0%EB%AA%85%EC%84%B8%EC%84%9C.md)
 </br>
-[2. 요구사항 정의서 (PRD) ](https://github.com/This-Is-Sevice-Template-Codes/Chatting-System-Template/blob/main/%5B2%5D%20%EC%9A%94%EA%B5%AC%EC%82%AC%ED%95%AD%20%EC%A0%95%EC%9D%98%EC%84%9C.md)
+[2. 요구사항 정의서 (PRD)](https://github.com/This-Is-Sevice-Template-Codes/Chatting-System-Template/blob/main/docs/%5B2%5D%20%EC%9A%94%EA%B5%AC%EC%82%AC%ED%95%AD%20%EC%A0%95%EC%9D%98%EC%84%9C.md)
 </br>
-[3. 템플릿 코드용 DB 스키마 (MySQL DDL)](https://github.com/This-Is-Sevice-Template-Codes/Chatting-System-Template/blob/main/%5B3%5D%20%ED%85%9C%ED%94%8C%EB%A6%BF%20%EC%BD%94%EB%93%9C%EC%9A%A9%20DB%20%EC%8A%A4%EC%B9%B4%EB%A7%88%20MySQL.md)
+[3. 템플릿 코드용 DB 스키마 (MySQL DDL)](https://github.com/This-Is-Sevice-Template-Codes/Chatting-System-Template/blob/main/docs/%5B3%5D%20%ED%85%9C%ED%94%8C%EB%A6%BF%20%EC%BD%94%EB%93%9C%EC%9A%A9%20DB%20%EC%8A%A4%EC%B9%B4%EB%A7%88%20MySQL.md)
 </br>
 
 아래 내용은 기존 기술 명세서 뒤에 이어붙이거나, 별도의 **[Project Strategy & scenarios]** 챕터로 구성하면 좋습니다.
