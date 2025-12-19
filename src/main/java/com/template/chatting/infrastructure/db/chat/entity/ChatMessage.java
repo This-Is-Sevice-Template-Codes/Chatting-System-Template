@@ -1,33 +1,49 @@
 package com.template.chatting.infrastructure.db.chat.entity;
 
-import jakarta.persistence.*;
-import lombok.AccessLevel;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "chat_message", indexes = {
+    @Index(name = "idx_room_msg", columnList = "roomId, messageId DESC")
+})
 @EntityListeners(AuditingEntityListener.class) // JPA Auditing 리스너 등록
 public class ChatMessage {
 
-  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long messageId;
 
-  private String sender;
+  private Long roomId;
+
+  private Long senderId;
+
+  @Column(columnDefinition = "TEXT")
   private String content;
 
-  @CreatedDate // 저장 시 시간 자동 주입
-  @Column(updatable = false)
-  private LocalDateTime sendTime;
+  @Enumerated(EnumType.STRING)
+  private MessageType msgType; // TALK, ENTER, LEAVE
 
-  // 생성자 (ID와 시간은 자동 생성이므로 제외)
-  public ChatMessage(String sender, String content) {
-    this.sender = sender;
-    this.content = content;
-  }
+  @CreatedDate
+  @Column(updatable = false)
+  private LocalDateTime createdAt;
 }

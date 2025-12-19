@@ -2,166 +2,69 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Chat Test Client</title>
+  <title>STOMP Chat Tester</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-    .container { display: grid; gap: 10px; }
-    .box { border: 1px solid #ddd; padding: 15px; border-radius: 5px; background: #f9f9f9; }
-    #chat-box { height: 400px; overflow-y: scroll; background: white; border: 1px solid #ccc; padding: 10px; }
-    .msg { margin-bottom: 5px; padding: 5px; border-radius: 4px; }
-    .msg.me { background: #dcf8c6; text-align: right; }
-    .msg.other { background: #eee; }
-    .msg.sys { text-align: center; color: #888; font-size: 0.8em; }
-    input, button { padding: 8px; margin-right: 5px; }
-    .status { font-weight: bold; color: red; }
-    .status.connected { color: green; }
+    body { font-family: sans-serif; padding: 20px; }
+    .msg { padding: 5px; margin: 2px; border-radius: 4px; }
+    .me { background: #dcf8c6; text-align: right; }
+    .other { background: #eee; }
+    .sys { text-align: center; color: #888; font-size: 0.8em; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 </head>
 <body>
-
-<h1>💬 Real-time Chat Tester</h1>
-
-<div class="container">
-  <div class="box">
-    <h3>1. Connection & Room</h3>
-    <div>
-      <label>Sender ID (User PK):</label>
-      <input type="number" id="senderId" value="1" placeholder="User ID">
-    </div>
-    <div>
-      <label>Room ID:</label>
-      <input type="number" id="roomId" value="1" placeholder="Room ID">
-    </div>
-    <div style="margin-top: 10px;">
-      <button onclick="connect()" id="btnConnect">Connect & Enter</button>
-      <button onclick="disconnect()" id="btnDisconnect" disabled>Disconnect</button>
-      <span class="status" id="status">Disconnected</span>
-    </div>
-  </div>
-
-  <div class="box">
-    <h3>2. Chat</h3>
-    <div id="chat-box"></div>
-    <div style="margin-top: 10px; display: flex;">
-      <input type="text" id="message" style="flex: 1;" placeholder="메시지 입력..." onkeypress="if(event.keyCode==13) sendMessage()">
-      <button onclick="sendMessage()">Send</button>
-    </div>
-  </div>
+<h1>Chat Client (STOMP)</h1>
+<div>
+  <input id="senderId" placeholder="Sender ID (1)">
+  <input id="roomId" placeholder="Room ID (1)">
+  <button onclick="connect()">Connect</button>
+</div>
+<div id="chatBox" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc; margin: 10px 0;"></div>
+<div>
+  <input id="msg" placeholder="Message">
+  <button onclick="send()">Send</button>
 </div>
 
 <script>
   let stompClient = null;
-  let currentSubscription = null;
 
-  // 1. 연결 및 입장
   function connect() {
-    const senderId = document.getElementById('senderId').value;
-    const roomId = document.getElementById('roomId').value;
-
-    // 백엔드 WebSocketConfig에 설정된 엔드포인트
-    const socket = new WebSocket('ws://localhost:8080/ws-chat');
+    const socket = new WebSocket('ws://localhost:8086/ws-chat');
     stompClient = Stomp.over(socket);
+    stompClient.connect({}, function () {
+      console.log('Connected');
+      const roomId = document.getElementById('roomId').value;
+      const senderId = document.getElementById('senderId').value;
 
-    // 디버깅 로그 끄기 (원하면 주석 해제)
-    // stompClient.debug = null;
-
-    stompClient.connect({}, function (frame) {
-      setConnected(true);
-      console.log('Connected: ' + frame);
-
-      // 1) 구독 (Subscribe): /sub/chat/room/{roomId}
-      const subPath = '/sub/chat/room/' + roomId;
-      currentSubscription = stompClient.subscribe(subPath, function (message) {
-        showGreeting(JSON.parse(message.body));
+      // 구독
+      stompClient.subscribe('/sub/chat/room/' + roomId, function (msg) {
+        showMsg(JSON.parse(msg.body));
       });
-      console.log(`Subscribed to ${subPath}`);
 
-      // 2) 입장 메시지 전송 (Publish): /pub/chat/enter
-      // ChatService.enterRoom() 트리거 -> DB Insert/Update 수행
+      // 입장 요청
       stompClient.send("/pub/chat/enter", {}, JSON.stringify({
-        'senderId': senderId,
-        'roomId': roomId
+        roomId: roomId, senderId: senderId
       }));
-
-    }, function (error) {
-      console.error('STOMP error:', error);
-      alert('연결 실패: 콘솔 로그를 확인하세요.');
     });
   }
 
-  // 2. 연결 해제
-  function disconnect() {
-    if (stompClient !== null) {
-      stompClient.disconnect();
-    }
-    setConnected(false);
-    console.log("Disconnected");
-  }
-
-  // 3. 메시지 전송
-  function sendMessage() {
-    const senderId = document.getElementById('senderId').value;
+  function send() {
     const roomId = document.getElementById('roomId').value;
-    const messageContent = document.getElementById('message').value;
+    const senderId = document.getElementById('senderId').value;
+    const content = document.getElementById('msg').value;
 
-    if (!stompClient || !messageContent) return;
-
-    // 발행 (Publish): /pub/chat/message
     stompClient.send("/pub/chat/message", {}, JSON.stringify({
-      'senderId': senderId,
-      'roomId': roomId,
-      'content': messageContent,
-      'msgType': 'TALK'
+      roomId: roomId, senderId: senderId, content: content, msgType: 'TALK'
     }));
-
-    document.getElementById('message').value = '';
+    document.getElementById('msg').value = '';
   }
 
-  // UI 업데이트
-  function showGreeting(message) {
-    const chatBox = document.getElementById('chat-box');
-    const myId = document.getElementById('senderId').value;
-
+  function showMsg(data) {
     const div = document.createElement('div');
-    div.classList.add('msg');
-
-    if (message.msgType === 'ENTER') {
-      div.classList.add('sys');
-      div.innerText = `[알림] ${message.content}`;
-    } else {
-      // 내 메시지인지 남의 메시지인지 구분
-      // 주의: 실제로는 senderId가 Long/String 일치 여부 확인 필요
-      if (String(message.senderId) === String(myId)) {
-        div.classList.add('me');
-        div.innerText = `${message.content} : 나`;
-      } else {
-        div.classList.add('other');
-        div.innerText = `User(${message.senderId}) : ${message.content}`;
-      }
-    }
-
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight; // 자동 스크롤
-  }
-
-  function setConnected(connected) {
-    document.getElementById('btnConnect').disabled = connected;
-    document.getElementById('btnDisconnect').disabled = !connected;
-    document.getElementById('senderId').disabled = connected;
-    document.getElementById('roomId').disabled = connected;
-    const status = document.getElementById('status');
-
-    if (connected) {
-      status.innerText = "Connected";
-      status.classList.add('connected');
-    } else {
-      status.innerText = "Disconnected";
-      status.classList.remove('connected');
-      document.getElementById('chat-box').innerHTML = '';
-    }
+    div.className = 'msg ' + (data.msgType === 'ENTER' ? 'sys' : (data.senderId == document.getElementById('senderId').value ? 'me' : 'other'));
+    div.innerText = data.msgType === 'ENTER' ? data.content : `${data.senderId}: ${data.content} (${data.sendTime})`;
+    document.getElementById('chatBox').appendChild(div);
   }
 </script>
-
 </body>
 </html>
